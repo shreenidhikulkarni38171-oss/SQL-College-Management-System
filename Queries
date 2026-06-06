@@ -1,1 +1,11 @@
+ALTER TABLE students
+ADD puc_year TINYINT;
 
+ALTER TABLE lecturers
+ADD employee_type VARCHAR(30);
+
+ALTER TABLE student_payments
+ADD due_date DATE;
+
+ALTER TABLE students
+ADD student_status varchar(10);
