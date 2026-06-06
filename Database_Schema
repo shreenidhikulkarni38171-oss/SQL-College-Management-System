@@ -1,19 +1,79 @@
-Database_Schema/create_tables.sql
 CREATE TABLE departments(
     department_id INT PRIMARY KEY AUTO_INCREMENT,
     department_name VARCHAR(100) NOT NULL
 );
 CREATE TABLE students(
     student_id INT PRIMARY KEY AUTO_INCREMENT,
-    first_name VARCHAR(50),
-    last_name VARCHAR(50),
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
     gender VARCHAR(10),
     date_of_birth DATE,
-    email VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
     phone VARCHAR(15),
     department_id INT,
     admission_date DATE,
 
     FOREIGN KEY (department_id)
     REFERENCES departments(department_id)
+);
+CREATE TABLE trainers(
+    trainer_id INT PRIMARY KEY AUTO_INCREMENT,
+    trainer_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(15),
+    department_id INT,
+
+    FOREIGN KEY (department_id)
+    REFERENCES departments(department_id)
+);
+CREATE TABLE courses(
+    course_id INT PRIMARY KEY AUTO_INCREMENT,
+    course_name VARCHAR(100) NOT NULL,
+    duration_months INT,
+    trainer_id INT,
+    department_id INT,
+
+    FOREIGN KEY (trainer_id)
+    REFERENCES trainers(trainer_id),
+
+    FOREIGN KEY (department_id)
+    REFERENCES departments(department_id)
+);
+CREATE TABLE enrollments(
+    enrollment_id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT,
+    course_id INT,
+    enrollment_date DATE,
+
+    FOREIGN KEY (student_id)
+    REFERENCES students(student_id),
+
+    FOREIGN KEY (course_id)
+    REFERENCES courses(course_id)
+);
+CREATE TABLE attendance(
+    attendance_id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT,
+    course_id INT,
+    attendance_date DATE,
+    status VARCHAR(20),
+
+    FOREIGN KEY (student_id)
+    REFERENCES students(student_id),
+
+    FOREIGN KEY (course_id)
+    REFERENCES courses(course_id)
+);
+CREATE TABLE marks(
+    mark_id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT,
+    course_id INT,
+    exam_name VARCHAR(100),
+    marks_obtained DECIMAL(5,2),
+
+    FOREIGN KEY (student_id)
+    REFERENCES students(student_id),
+
+    FOREIGN KEY (course_id)
+    REFERENCES courses(course_id)
 );
