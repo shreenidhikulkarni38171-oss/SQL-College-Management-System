@@ -1,79 +1,104 @@
-CREATE TABLE departments(
-    department_id INT PRIMARY KEY AUTO_INCREMENT,
-    department_name VARCHAR(100) NOT NULL
-);
-CREATE TABLE students(
-    student_id INT PRIMARY KEY AUTO_INCREMENT,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    gender VARCHAR(10),
-    date_of_birth DATE,
-    email VARCHAR(100) UNIQUE,
-    phone VARCHAR(15),
-    department_id INT,
-    admission_date DATE,
+CREATE DATABASE college_management;
 
-    FOREIGN KEY (department_id)
-    REFERENCES departments(department_id)
-);
-CREATE TABLE trainers(
-    trainer_id INT PRIMARY KEY AUTO_INCREMENT,
-    trainer_name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE,
-    phone VARCHAR(15),
-    department_id INT,
-
-    FOREIGN KEY (department_id)
-    REFERENCES departments(department_id)
-);
-CREATE TABLE courses(
+USE college_management;
+CREATE TABLE courses (
     course_id INT PRIMARY KEY AUTO_INCREMENT,
-    course_name VARCHAR(100) NOT NULL,
-    duration_months INT,
-    trainer_id INT,
-    department_id INT,
-
-    FOREIGN KEY (trainer_id)
-    REFERENCES trainers(trainer_id),
-
-    FOREIGN KEY (department_id)
-    REFERENCES departments(department_id)
+    course_name VARCHAR(20) NOT NULL UNIQUE
 );
-CREATE TABLE enrollments(
-    enrollment_id INT PRIMARY KEY AUTO_INCREMENT,
-    student_id INT,
-    course_id INT,
-    enrollment_date DATE,
-
-    FOREIGN KEY (student_id)
-    REFERENCES students(student_id),
+CREATE TABLE sections (
+    section_id INT PRIMARY KEY AUTO_INCREMENT,
+    course_id INT NOT NULL,
+    section_name VARCHAR(20) NOT NULL,
+    capacity INT,
 
     FOREIGN KEY (course_id)
     REFERENCES courses(course_id)
 );
-CREATE TABLE attendance(
+CREATE TABLE students (
+    student_id INT PRIMARY KEY AUTO_INCREMENT,
+    admission_no VARCHAR(20) UNIQUE NOT NULL,
+    student_name VARCHAR(100) NOT NULL,
+    gender VARCHAR(10),
+    dob DATE,
+    phone VARCHAR(15),
+    city VARCHAR(50),
+    admission_date DATE,
+    section_id INT,
+
+    FOREIGN KEY (section_id)
+    REFERENCES sections(section_id)
+);
+CREATE TABLE subjects (
+    subject_id INT PRIMARY KEY AUTO_INCREMENT,
+    course_id INT NOT NULL,
+    subject_name VARCHAR(100) NOT NULL,
+
+    FOREIGN KEY (course_id)
+    REFERENCES courses(course_id)
+);
+CREATE TABLE lecturers (
+    lecturer_id INT PRIMARY KEY AUTO_INCREMENT,
+    lecturer_name VARCHAR(100) NOT NULL,
+    qualification VARCHAR(100),
+    experience_years INT,
+    joining_date DATE,
+    monthly_salary DECIMAL(10,2),
+    subject_id INT,
+
+    FOREIGN KEY (subject_id)
+    REFERENCES subjects(subject_id)
+);
+CREATE TABLE attendance (
     attendance_id INT PRIMARY KEY AUTO_INCREMENT,
-    student_id INT,
-    course_id INT,
-    attendance_date DATE,
-    status VARCHAR(20),
+    student_id INT NOT NULL,
+    attendance_date DATE NOT NULL,
+    status VARCHAR(10),
 
     FOREIGN KEY (student_id)
-    REFERENCES students(student_id),
-
-    FOREIGN KEY (course_id)
-    REFERENCES courses(course_id)
+    REFERENCES students(student_id)
 );
-CREATE TABLE marks(
+CREATE TABLE marks (
     mark_id INT PRIMARY KEY AUTO_INCREMENT,
-    student_id INT,
-    course_id INT,
-    exam_name VARCHAR(100),
+    student_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    exam_name VARCHAR(50),
     marks_obtained DECIMAL(5,2),
+    max_marks DECIMAL(5,2),
 
     FOREIGN KEY (student_id)
     REFERENCES students(student_id),
 
+    FOREIGN KEY (subject_id)
+    REFERENCES subjects(subject_id)
+);
+CREATE TABLE fee_structure (
+    fee_structure_id INT PRIMARY KEY AUTO_INCREMENT,
+    course_id INT NOT NULL,
+    academic_year VARCHAR(20),
+    annual_fee DECIMAL(10,2),
+    admission_fee DECIMAL(10,2),
+    lab_fee DECIMAL(10,2),
+    exam_fee DECIMAL(10,2),
+
     FOREIGN KEY (course_id)
     REFERENCES courses(course_id)
 );
+CREATE TABLE student_payments (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    payment_date DATE,
+    amount_paid DECIMAL(10,2),
+    payment_mode VARCHAR(20),
+    receipt_no VARCHAR(30),
+
+    FOREIGN KEY (student_id)
+    REFERENCES students(student_id)
+);
+CREATE TABLE expenses (
+    expense_id INT PRIMARY KEY AUTO_INCREMENT,
+    expense_date DATE,
+    expense_category VARCHAR(50),
+    description VARCHAR(255),
+    amount DECIMAL(10,2)
+);
+
