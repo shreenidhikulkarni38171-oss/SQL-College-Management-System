@@ -16,3 +16,340 @@ INSERT INTO sections (course_id, section_name, capacity) VALUES
 ((SELECT course_id FROM courses WHERE course_name = 'Arts'), 'HEPS', 80),
 ((SELECT course_id FROM courses WHERE course_name = 'Arts'), 'HESP', 80);
 
+-- Clear any old dirty records first and reset counter
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE subjects;
+SET FOREIGN_KEY_CHECKS = 1;
+
+INSERT INTO subjects (course_id, subject_name) VALUES
+-- Science Subjects (Course ID: 1)
+(1, 'English'),
+(1, 'Kannada'),
+(1, 'Physics'),
+(1, 'Chemistry'),
+(1, 'Mathematics'),
+(1, 'Computer Science'),
+(1, 'Biology'),
+
+-- Commerce Subjects (Course ID: 2)
+(2, 'English'),
+(2, 'Kannada'),
+(2, 'Accountancy'),
+(2, 'Business Studies'),
+(2, 'Economics'),
+(2, 'Statistics'),
+
+-- Arts Subjects (Course ID: 3)
+(3, 'English'),
+(3, 'Kannada'),
+(3, 'History'),
+(3, 'Political Science'),
+(3, 'Sociology'),
+(3, 'Psychology');
+
+fee_structure
+
+TRUNCATE TABLE fee_structure;
+
+INSERT INTO fee_structure (course_id, academic_year, annual_fee, admission_fee, lab_fee, exam_fee) VALUES
+-- ===============================
+-- YEARS 1 & 2: BASELINE FEES
+-- ===============================
+-- Academic Year: 2023 - 24
+(1, '2023 - 24', 42000.00, 3000.00, 3000.00, 2000.00), -- Science Total: 50,000
+(2, '2023 - 24', 35000.00, 3000.00, 0.00, 2000.00),    -- Commerce Total: 40,000
+(3, '2023 - 24', 21000.00, 2000.00, 0.00, 2000.00),    -- Arts Total: 25,000
+
+-- Academic Year: 2024 - 25 (Flat growth, fees remain identical)
+(1, '2024 - 25', 42000.00, 3000.00, 3000.00, 2000.00),
+(2, '2024 - 25', 35000.00, 3000.00, 0.00, 2000.00),
+(3, '2024 - 25', 21000.00, 2000.00, 0.00, 2000.00),
+
+-- ===============================
+-- YEARS 3 & 4: RAISED FEES
+-- ===============================
+-- Academic Year: 2025 - 26 (Fee Hike implemented alongside Student Boom)
+(1, '2025 - 26', 50000.00, 4000.00, 4000.00, 2000.00), -- Science Raised Total: 60,000
+(2, '2025 - 26', 42000.00, 4000.00, 0.00, 2000.00),    -- Commerce Raised Total: 48,000
+(3, '2025 - 26', 25000.00, 3000.00, 0.00, 2000.00),    -- Arts Raised Total: 30,000
+
+-- Academic Year: 2026 - 27 (Fees remain identical to the Year 3 hike)
+(1, '2026 - 27', 50000.00, 4000.00, 4000.00, 2000.00),
+(2, '2026 - 27', 42000.00, 4000.00, 0.00, 2000.00),
+(3, '2026 - 27', 25000.00, 3000.00, 0.00, 2000.00);
+
+-- Clear old entries if any
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE students;
+SET FOREIGN_KEY_CHECKS = 1;
+
+Sample student insert 
+-- Inserting active 1st PUC Students (Joined in the 2025-26 Boom)
+INSERT INTO students (admission_no, student_name, gender, dob, phone, city, admission_date, section_id, current_status, academic_year) VALUES
+('ADM2025001', 'Rahul Sharma', 'Male', '2009-04-12', '9876543210', 'Bengaluru', '2025-06-01', 1, '1st PUC', '2025 - 26'), -- PCMC
+('ADM2025002', 'Priya Patel', 'Female', '2009-09-23', '9876543211', 'Mangaluru', '2025-06-02', 3, '1st PUC', '2025 - 26'), -- CEBA
+('ADM2025003', 'Aman Khan', 'Male', '2009-01-15', '9876543212', 'Mysuru', '2025-06-05', 5, '1st PUC', '2025 - 26');    -- HEPS
+
+-- Inserting active 2nd PUC Students (Joined in 2024-25, promoted now)
+INSERT INTO students (admission_no, student_name, gender, dob, phone, city, admission_date, section_id, current_status, academic_year) VALUES
+('ADM2024045', 'Sneha Reddy', 'Female', '2008-11-05', '9123456780', 'Bengaluru', '2024-06-03', 1, '2nd PUC', '2024 - 25'), -- PCMC
+('ADM2024089', 'Vikram Gowda', 'Male', '2008-07-19', '9123456781', 'Hubballi', '2024-06-04', 4, '2nd PUC', '2024 - 25');   -- SEBA
+
+-- Inserting Alumnae / Passed Out Students (The 2023 Launch batch that graduated)
+INSERT INTO students (admission_no, student_name, gender, dob, phone, city, admission_date, section_id, current_status, academic_year) VALUES
+('ADM2023001', 'Darshan Kumar', 'Male', '2007-03-30', '9000111222', 'Bengaluru', '2023-06-10', 2, 'Passed Out', '2023 - 24'), -- PCMB
+('ADM2023102', 'Ananya Hegde', 'Female', '2007-05-14', '9000111223', 'Udupi', '2023-06-11', 3, 'Passed Out', '2023 - 24');     -- CEBA
+
+Python code generates 
+
+PIPELINE to generate random numbers in sql using python intergation of faker 
+[ Python Script ] 
+   │
+   ├── 1. Reads your exact spreadsheet enrollment numbers
+   ├── 2. Uses Faker('en_IN') to generate thousands of unique Indian names/profiles
+   └── 3. Generates a massive, clean 'insert_students.sql' script file
+   │
+[ MySQL Workbench ] ──> Runs the file and populates your tables perfectly
+
+
+use this python script for generating student table sql file and import it into the sql database. this uses faker function to generate and this
+has good lgic into students in 1 st year move to 2nd year some dropout randomly and some new admissions in the 2 nd year. 
+
+
+import random
+from faker import Faker
+
+# Initialize Faker with Indian locale
+fake = Faker('en_IN')
+
+# Target enrollment distributions directly from your spreadsheets
+lifecycle_matrix = {
+    "2023 - 24": {1: (100, 0), 2: (90, 0), 3: (120, 0), 4: (80, 0), 5: (40, 0), 6: (40, 0)},
+    "2024 - 25": {1: (102, 90), 2: (88, 81), 3: (122, 108), 4: (78, 72), 5: (42, 36), 6: (38, 36)},
+    "2025 - 26": {1: (180, 92), 2: (150, 79), 3: (200, 110), 4: (130, 70), 5: (70, 38), 6: (70, 34)},
+    "2026 - 27": {1: (130, 162), 2: (110, 135), 3: (150, 180), 4: (100, 117), 5: (50, 63), 6: (50, 63)}
+}
+
+# In-memory pools tracking student IDs to manage promotions accurately
+puc1_pool = {1: [], 2: [], 3: [], 4: [], 5: [], 6: []}
+puc2_pool = {1: [], 2: [], 3: [], 4: [], 5: [], 6: []}
+
+with open("production_student_lifecycle.sql", "w", encoding="utf-8") as f:
+    f.write("-- PRODUCTION GRADE STUDENT LIFECYCLE SEED DATA\n")
+    f.write("SET FOREIGN_KEY_CHECKS = 0;\nTRUNCATE TABLE students;\nSET FOREIGN_KEY_CHECKS = 1;\n\n")
+
+    for year in ["2023 - 24", "2024 - 25", "2025 - 26", "2026 - 27"]:
+        f.write(f"\n-- ==========================================\n-- ACADEMIC YEAR TIMELINE: {year}\n-- ==========================================\n")
+        sections_config = lifecycle_matrix[year]
+        
+        for section_id, (target_1st, target_2nd) in sections_config.items():
+            f.write(f"\n-- Section ID: {section_id} ({year}) operations\n")
+            
+            # PHASE A: Graduate the previous year's 2nd PUC students to 'Passed Out'
+            if puc2_pool[section_id]:
+                f.write(f"-- Status Update: Graduating {len(puc2_pool[section_id])} senior students\n")
+                for student_adm in puc2_pool[section_id]:
+                    f.write(f"UPDATE students SET current_status = 'Passed Out' WHERE admission_no = '{student_adm}';\n")
+                puc2_pool[section_id] = [] # Clear out graduated students from active pool
+            
+            # PHASE B: Promote active 1st PUC students to 2nd PUC & isolate dropouts
+            if target_2nd > 0 and puc1_pool[section_id]:
+                available_students = puc1_pool[section_id]
+                random.shuffle(available_students)
+                
+                to_promote = available_students[:target_2nd]
+                to_dropout = available_students[target_2nd:]
+                
+                f.write(f"-- Status Update: Promoting {len(to_promote)} students to 2nd PUC\n")
+                for student_adm in to_promote:
+                    f.write(f"UPDATE students SET current_status = '2nd PUC' WHERE admission_no = '{student_adm}';\n")
+                    puc2_pool[section_id].append(student_adm) # Track them as current seniors
+                    
+                if to_dropout:
+                    f.write(f"-- Status Update: Recording {len(to_dropout)} dropout/attrition anomalies\n")
+                    for student_adm in to_dropout:
+                        f.write(f"UPDATE students SET current_status = 'Dropped Out' WHERE admission_no = '{student_adm}';\n")
+                
+                puc1_pool[section_id] = [] # Clear out old 1st PUC roster
+            
+            # PHASE C: Fresh New Admissions (Pure Inserts with guaranteed unique keys)
+            if target_1st > 0:
+                f.write(f"-- Ledger Action: Inserting {target_1st} fresh 1st PUC registrations\n")
+                for i in range(1, target_1st + 1):
+                    gender = "Male" if random.random() > 0.5 else "Female"
+                    name = fake.name_male() if gender == "Male" else fake.name_female()
+                    
+                    # Create completely distinct time-stamped unique keys
+                    year_clean = year.replace(' ', '').replace('-', '')
+                    adm = f"ADM-{year_clean}-{section_id}-{str(i).zfill(3)}"
+                    
+                    dob = fake.date_of_birth(minimum_age=15, maximum_age=17).strftime('%Y-%m-%d')
+                    phone = f"{random.choice([7,8,9])}{''.join([str(random.randint(0,9)) for _ in range(9)])}"
+                    city = random.choice(["Bengaluru", "Mysuru", "Mangaluru", "Hubballi", "Belagavi"])
+                    adm_date = f"{year[:4]}-06-{random.randint(1,15):02d}"
+                    
+                    clean_name = name.replace("'", "''")
+                    f.write(f"INSERT INTO students (admission_no, student_name, gender, dob, phone, city, admission_date, section_id, current_status, academic_year) "
+                            f"VALUES ('{adm}', '{clean_name}', '{gender}', '{dob}', '{phone}', '{city}', '{adm_date}', {section_id}, '1st PUC', '{year}');\n")
+                    
+                    puc1_pool[section_id].append(adm) # Cache registration number for upcoming timeline updates
+
+print("Success! Your revised file 'production_student_lifecycle.sql' has been built safely.")
+
+
+Populate the Fee Rules
+-- Year 1 & 2 Rates (2023-24 and 2024-25)
+INSERT INTO fee_structure (section_id, academic_year, tuition_fee, lab_fee, total_fee) VALUES
+(1, '2023 - 24', 35000.00, 10000.00, 45000.00), -- PCMC
+(2, '2023 - 24', 35000.00, 8000.00, 43000.00),  -- PCMB
+(3, '2023 - 24', 30000.00, 0.00, 30000.00),     -- CEBA
+(4, '2023 - 24', 28000.00, 0.00, 28000.00),     -- SEBA
+(5, '2023 - 24', 22000.00, 0.00, 22000.00),     -- HEPS
+(6, '2023 - 24', 22000.00, 0.00, 22000.00);     -- HESP
+
+INSERT INTO fee_structure (section_id, academic_year, tuition_fee, lab_fee, total_fee) 
+SELECT section_id, '2024 - 25', tuition_fee, lab_fee, total_fee FROM fee_structure WHERE academic_year = '2023 - 24';
+
+-- Year 3 & 4 Inflation adjustment (2025-26 and 2026-27 fees increased slightly)
+INSERT INTO fee_structure (section_id, academic_year, tuition_fee, lab_fee, total_fee) VALUES
+(1, '2025 - 26', 38000.00, 12000.00, 50000.00),
+(2, '2025 - 26', 38000.00, 10000.00, 48000.00),
+(3, '2025 - 26', 33000.00, 0.00, 33000.00),
+(4, '2025 - 26', 30000.00, 0.00, 30000.00),
+(5, '2025 - 26', 25000.00, 0.00, 25000.00),
+(6, '2025 - 26', 25000.00, 0.00, 25000.00);
+
+INSERT INTO fee_structure (section_id, academic_year, tuition_fee, lab_fee, total_fee) 
+SELECT section_id, '2026 - 27', tuition_fee, lab_fee, total_fee FROM fee_structure WHERE academic_year = '2025 - 26';
+
+Now we generate the payments with python scripts again logic is payments are done in different modes and instalments and have 
+realsitic approch to the paymensts. 
+
+import random
+from datetime import datetime, timedelta
+
+# 1. Define matching fee rules from our lookup table
+fee_rules = {
+    "2023 - 24": {1: 45000, 2: 43000, 3: 30000, 4: 28000, 5: 22000, 6: 22000},
+    "2024 - 25": {1: 45000, 2: 43000, 3: 30000, 4: 28000, 5: 22000, 6: 22000},
+    "2025 - 26": {1: 50000, 2: 48000, 3: 33000, 4: 30000, 5: 25000, 6: 25000},
+    "2026 - 27": {1: 50000, 2: 48000, 3: 33000, 4: 30000, 5: 25000, 6: 25000}
+}
+
+# 2. Replicate historical enrolment matrix to target exact matching student IDs
+lifecycle_matrix = {
+    "2023 - 24": {1: (100, 0), 2: (90, 0), 3: (120, 0), 4: (80, 0), 5: (40, 0), 6: (40, 0)},
+    "2024 - 25": {1: (102, 90), 2: (88, 81), 3: (122, 108), 4: (78, 72), 5: (42, 36), 6: (38, 36)},
+    "2025 - 26": {1: (180, 92), 2: (150, 79), 3: (200, 110), 4: (130, 70), 5: (70, 38), 6: (70, 34)},
+    "2026 - 27": {1: (130, 162), 2: (110, 135), 3: (150, 180), 4: (100, 117), 5: (50, 63), 6: (50, 63)}
+}
+
+puc1_pool = {1: [], 2: [], 3: [], 4: [], 5: [], 6: []}
+puc2_pool = {1: [], 2: [], 3: [], 4: [], 5: [], 6: []}
+receipt_counter = 100001
+
+def generate_random_date(start_year, base_month_june):
+    """Generates a random date progressing through the academic school year."""
+    start_date = datetime(start_year, 6, 1) + timedelta(days=random.randint(0, 14))
+    end_date = datetime(start_year + 1, 3, 15)
+    time_between = end_date - start_date
+    random_days = random.randint(0, time_between.days)
+    return start_date + timedelta(days=random_days)
+
+with open("populate_payments.sql", "w", encoding="utf-8") as f:
+    f.write("-- SYSTEM GENERATED FINANCIAL LEDGER SEED FILE\n")
+    f.write("USE college_management;\n\n")
+    f.write("DROP TABLE IF EXISTS student_payments;\n")
+    f.write("CREATE TABLE student_payments (\n"
+            "    payment_id INT AUTO_INCREMENT PRIMARY KEY,\n"
+            "    admission_no VARCHAR(30) NOT NULL,\n"
+            "    academic_year VARCHAR(20) NOT NULL,\n"
+            "    payment_date DATE NOT NULL,\n"
+            "    amount_paid DECIMAL(10, 2) NOT NULL,\n"
+            "    payment_mode ENUM('Cash', 'Card', 'UPI', 'Net Banking') NOT NULL,\n"
+            "    receipt_number VARCHAR(50) UNIQUE NOT NULL,\n"
+            "    FOREIGN KEY (admission_no) REFERENCES students(admission_no)\n"
+            ");\n\n")
+
+    for year in ["2023 - 24", "2024 - 25", "2025 - 26", "2026 - 27"]:
+        f.write(f"\n-- ==========================================\n-- TRANSACTIONS FOR ACADEMIC YEAR: {year}\n-- ==========================================\n")
+        base_calendar_year = int(year[:4])
+        sections_config = lifecycle_matrix[year]
+        
+        for section_id, (target_1st, target_2nd) in sections_config.items():
+            active_students_this_term = []
+            
+            # Carry over promotions to trace payments for 2nd PUC
+            if target_2nd > 0 and puc1_pool[section_id]:
+                available = list(puc1_pool[section_id])
+                random.shuffle(available)
+                to_promote = available[:target_2nd]
+                active_students_this_term.extend([(adm, "2nd PUC") for adm in to_promote])
+                puc2_pool[section_id] = to_promote
+                puc1_pool[section_id] = []
+            
+            # Map fresh 1st PUC student records
+            year_clean = year.replace(' ', '').replace('-', '')
+            fresh_admissions = [f"ADM-{year_clean}-{section_id}-{str(i).zfill(3)}" for i in range(1, target_1st + 1)]
+            active_students_this_term.extend([(adm, "1st PUC") for adm in fresh_admissions])
+            puc1_pool[section_id] = fresh_admissions
+            
+            if not active_students_this_term:
+                continue
+                
+            # Pick exactly 2 to 3 lucky students from this section for the 50% scholarship waiver
+            scholarship_count = random.randint(2, 3)
+            scholarship_students = set(random.sample([s[0] for s in active_students_this_term], min(scholarship_count, len(active_students_this_term))))
+            
+            base_fee = fee_rules[year][section_id]
+            
+            for admission_no, grade in active_students_this_term:
+                # Rule: Apply 50% scholarship limit if flagged
+                is_scholarship = admission_no in scholarship_students
+                target_total = base_fee * 0.5 if is_scholarship else base_fee
+                
+                # Rule: Determine if paying full upfront vs breaking into installments
+                pay_in_full = random.random() < 0.25 # 25% pay full, 75% use installments
+                
+                payment_chunks = []
+                if pay_in_full:
+                    payment_chunks.append(target_total)
+                else:
+                    # Break up total fee across 3 distinct custom installations
+                    c1 = round(target_total * random.uniform(0.3, 0.45), 2)
+                    c2 = round(target_total * random.uniform(0.3, 0.4), 2)
+                    c3 = round(target_total - (c1 + c2), 2)
+                    payment_chunks.extend([c1, c2, c3])
+                
+                # Write individual transaction ledger lines
+                admission_date_offset = datetime(base_calendar_year, 6, random.randint(1, 10))
+                
+                for idx, amount in enumerate(payment_chunks):
+                    mode = random.choice(['Cash', 'Card', 'UPI', 'Net Banking'])
+                    
+                    if pay_in_full:
+                        pay_date = admission_date_offset + timedelta(days=random.randint(0, 5))
+                    else:
+                        # Space out payments chronologically (Installment 1, 2, 3)
+                        pay_date = admission_date_offset + timedelta(days=idx * random.randint(60, 90) + random.randint(1, 15))
+                    
+                    # Safety check: Cap payment dates inside realistic school calendar borders
+                    if pay_date > datetime(base_calendar_year + 1, 3, 31):
+                        pay_date = datetime(base_calendar_year + 1, 3, random.randint(10, 25))
+                        
+                    formatted_date = pay_date.strftime('%Y-%m-%d')
+                    comment = " -- 50% Scholarship Applied" if is_scholarship else ""
+                    
+                    sql_line = (
+                        f"INSERT INTO student_payments (admission_no, academic_year, payment_date, amount_paid, payment_mode, receipt_number) "
+                        f"VALUES ('{admission_no}', '{year}', '{formatted_date}', {amount}, '{mode}', 'RCPT-{receipt_counter}');{comment}\n"
+                    )
+                    f.write(sql_line)
+                    receipt_counter += 1
+
+print("Complete! Open and verify 'populate_payments.sql' directly within Workbench.")
+
+generte sql file and import it into my sql. 
+
+
+
