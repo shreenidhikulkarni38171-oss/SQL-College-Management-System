@@ -68,6 +68,46 @@ SELECT
 FROM lecturers
 ORDER BY department, FIELD(designation, 'HOD', 'Senior Lecturer', 'Lecturer');
 
+To check the size of the db table change the name of table just 
+
+SELECT 
+    table_name AS 'Table',
+    ROUND(((data_length) / 1024 / 1024), 2) AS 'Data Size (MB)',
+    ROUND(((index_length) / 1024 / 1024), 2) AS 'Index Size (MB)',
+    ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Total Physical Disk Size (MB)'
+FROM 
+    information_schema.tables
+WHERE 
+    table_schema = 'college_management'
+    AND table_name = 'attendance';
+
+this shows total attendance percentage and numbers for all 4 yers 
+
+USE college_management;
+
+SELECT 
+    s.academic_year AS 'Academic Year Batch',
+    SUM(summary.total_attended) AS 'Total Classes Attended',
+    SUM(summary.total_lectures) AS 'Total Tracked Lectures',
+    ROUND((SUM(summary.total_attended) / SUM(summary.total_lectures)) * 100, 2) AS 'Institutional Attendance Rate (%)'
+FROM students s
+JOIN (
+    -- This inner block shrinks 3 million rows into 2,330 rows instantly using indexes
+    SELECT 
+        admission_no,
+        COUNT(CASE WHEN status = 'Present' THEN 1 END) AS total_attended,
+        COUNT(*) AS total_lectures
+    FROM attendance
+    GROUP BY admission_no
+) summary ON s.admission_no = summary.admission_no
+GROUP BY s.academic_year
+ORDER BY s.academic_year ASC;
+
+creating a index 
+CREATE INDEX idx_attendance_status ON attendance(admission_no, status);
+
+
+
 
 
 
