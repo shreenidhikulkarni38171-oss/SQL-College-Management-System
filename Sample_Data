@@ -655,5 +655,130 @@ def run_attendance_pipeline():
 if __name__ == "__main__":
     run_attendance_pipeline()
 
+the final pipeline for college expenses 
+
+import mysql.connector
+from datetime import datetime, timedelta
+import random
+
+# Database Configuration Setup
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'your_password',  # 💡 Change this to your exact MySQL password
+    'database': 'college_management'
+}
+
+def run_expenses_pipeline():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        
+        print("Connected to database. Clearing old financial expense logs...")
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+        cursor.execute("TRUNCATE TABLE expenses;")
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+        conn.commit()
+        
+        # 1. DATA-DRIVEN SALARIES: Fetch real lecturers to generate matching monthly payrolls
+        cursor.execute("SELECT lecturer_id, lecturer_name, hire_date, designation FROM lecturers;")
+        faculty_list = cursor.fetchall()
+        
+        expense_batch = []
+        start_timeline = datetime(2022, 6, 1).date()
+        end_timeline = datetime(2026, 5, 31).date()
+        
+        print(f"Processing customized historical monthly payrolls for {len(faculty_list)} active staff members...")
+        
+        for lec_id, name, hire_date, designation in faculty_list:
+            # Determine base salary scale based on faculty hierarchy designations
+            if designation == 'HOD':
+                base_salary = random.randint(75000, 90000)
+            elif designation == 'Senior Lecturer':
+                base_salary = random.randint(55000, 70000)
+            else:
+                base_salary = random.randint(40000, 52000)
+                
+            # Pay them on the 1st of every month from the time they were hired until today
+            current_pay_date = max(start_timeline, hire_date)
+            # Roll forward to the next 1st of the month
+            if current_pay_date.day != 1:
+                if current_pay_date.month == 12:
+                    current_pay_date = datetime(current_pay_date.year + 1, 1, 1).date()
+                else:
+                    current_pay_date = datetime(current_pay_date.year, current_pay_date.month + 1, 1).date()
+                    
+            while current_pay_date <= end_timeline:
+                desc = f"Monthly payroll disbursement for {name} ({designation})"
+                expense_batch.append(('Staff Salary', float(base_salary), current_pay_date, desc))
+                
+                # Move to next month
+                if current_pay_date.month == 12:
+                    current_pay_date = datetime(current_pay_date.year + 1, 1, 1).date()
+                else:
+                    current_pay_date = datetime(current_pay_date.year, current_pay_date.month + 1, 1).date()
+
+        # 2. FIXED OPERATIONAL COSTS (Looping month-by-month for utilities and upkeep)
+        print("Generating monthly utility overheads and infrastructure maintenance logs...")
+        current_month = start_timeline
+        while current_month <= end_timeline:
+            # Utilities (Electricity, High-Speed Campus Internet, Water Bills)
+            utility_bill = random.randint(45000, 65000)
+            expense_batch.append(('Utilities', float(utility_bill), current_month, f"Campus utility bill block for {current_month.strftime('%B %Y')}"))
+            
+            # General Facility Maintenance & Cleaning Services
+            maint_bill = random.randint(30000, 50000)
+            expense_batch.append(('Maintenance', float(maint_bill), current_month, f"Monthly structural and facility maintenance contracts"))
+            
+            # Move to the next month block
+            if current_month.month == 12:
+                current_month = datetime(current_month.year + 1, 1, 1).date()
+            else:
+                current_month = datetime(current_month.year, current_month.month + 1, 1).date()
+
+        # 3. STRATEGIC RECURRING ANNUAL COSTS
+        print("Injecting seasonal academic expenditures (Labs, Events, and Growth Marketing campaigns)...")
+        for year in [2022, 2023, 2024, 2025]:
+            # Laboratory Restocking (Happens every June right when colleges reopen)
+            lab_cost = random.randint(180000, 250000)
+            expense_batch.append(('Lab Equipment & Supplies', float(lab_cost), datetime(year, 6, 15).date(), f"Annual chemical restock and physics lab hardware upgrades for AY {year}-{year+1}"))
+            
+            # Annual College Cultural Fest & Sports Day (Happens every December)
+            fest_cost = random.randint(300000, 450000)
+            expense_batch.append(('Events & Functions', float(fest_cost), datetime(year, 12, 20).date(), f"Annual cultural festival organization, sound systems, and student awards"))
+            
+            # CRITICAL NARRATIVE DRIVER: Marketing & Advertising Campaigns
+            # Massive budget increase in 2024 and 2025 to justify the high student admission spikes!
+            if year in [2024, 2025]:
+                mkt_cost = random.randint(350000, 500000) # Big print, digital, and billboard push
+                desc = f"Mega regional billboard and digital enrollment acquisition push for peak intake wave"
+            else:
+                mkt_cost = random.randint(80000, 120000) # Standard localized flyering
+                desc = f"Localized newspaper insertions and pre-university student awareness flyers"
+                
+            expense_batch.append(('Marketing & Ads', float(mkt_cost), datetime(year, 4, 10).date(), desc))
+
+        # Mass Insert records to database
+        insert_query = """
+            INSERT INTO expenses (expense_category, amount, expense_date, description)
+            VALUES (%s, %s, %s, %s);
+        """
+        cursor.executemany(insert_query, expense_batch)
+        conn.commit()
+        
+        print("-----------------------------------------------------------------")
+        print(f" Success! Expense Ledger Fully Populated. Added {len(expense_batch)} line transactions.")
+        
+    except mysql.connector.Error as err:
+        print(f"Database Financial Pipeline Error: {err}")
+    finally:
+        if 'conn' in locals() and conn.is_connected():
+            cursor.close()
+            conn.close()
+            print("Database channel safely closed.")
+
+if __name__ == "__main__":
+    run_expenses_pipeline()
+
 
 
