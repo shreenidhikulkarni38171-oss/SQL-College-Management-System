@@ -47,3 +47,29 @@ INSERT INTO sections (course_id, section_name, capacity) VALUES
 (3, 'HEPS', 80),  -- Arts
 (3, 'HESP', 80);  -- Arts
 
+-- View global operational income grouped by academic year and transaction methods
+SELECT 
+    academic_year,
+    payment_mode,
+    COUNT(*) as transaction_count,
+    SUM(amount_paid) as total_revenue_collected
+FROM student_payments
+GROUP BY academic_year, payment_mode
+ORDER BY academic_year;
+
+organized teaching staff grouped by their respective departments:
+
+SELECT 
+    department, 
+    designation, 
+    lecturer_name, 
+    employee_no, 
+    email 
+FROM lecturers
+ORDER BY department, FIELD(designation, 'HOD', 'Senior Lecturer', 'Lecturer');
+
+
+
+
+
+
