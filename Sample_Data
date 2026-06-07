@@ -352,4 +352,308 @@ print("Complete! Open and verify 'populate_payments.sql' directly within Workben
 generte sql file and import it into my sql. 
 
 
+now we are connecting the python and sql to upadte the student assignment to the lectures from the inital for which student which lectures
+taught ehich subject and when, this the logic of this table and used to link student to lecturer. 
+
+for this you need to install modules 
+
+pip install mysql-connector-python faker.
+
+and run this script in python terminal 
+
+import mysql.connector
+import random
+from faker import Faker
+
+fake = Faker('en_IN')
+
+# Database Connection Setup
+db_config = {
+    'host': 'localhost',
+    'user': 'root',       # Change if your MySQL username is different
+    'password': 'your_password',   # Put your actual MySQL root password here
+    'database': 'college_management'
+}
+
+# Mapping sections to their course combinations (Subject IDs)
+# 1:PHY, 2:CHE, 3:MAT, 4:CS, 5:BIO, 6:ACC, 7:BST, 8:ECO, 9:ENG, 10:KAN, 11:HIS, 12:POL, 13:SOC
+section_subject_map = {
+    1: [1, 2, 3, 4, 9, 10],   # PCMC
+    2: [1, 2, 3, 5, 9, 10],   # PCMB
+    3: [6, 7, 8, 4, 9, 10],   # CEBA
+    4: [6, 7, 8, 3, 9, 10],   # SEBA
+    5: [11, 8, 12, 13, 9, 10],# HEPS
+    6: [11, 8, 13, 12, 9, 10] # HESP
+}
+
+dept_to_subject_id = {
+    'Physics': 1, 'Chemistry': 2, 'Mathematics': 3, 'Computer Science': 4, 'Biology': 5,
+    'Accountancy': 6, 'Business Studies': 7, 'Economics': 8, 'English': 9, 'Kannada': 10,
+    'History': 11, 'Political Science': 12, 'Sociology': 13
+}
+
+def analyze_and_build_faculty():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        
+        print("Connected to database. Analyzing student distribution records...")
+        
+        # 1. ANALYZE EXISTING DATA: Get actual student counts grouped by Academic Year
+        cursor.execute("SELECT academic_year, COUNT(*) FROM students GROUP BY academic_year ORDER BY academic_year;")
+        year_metrics = cursor.fetchall()
+        
+        if not year_metrics:
+            print("Error: No student data found to analyze! Run your student script first.")
+            return
+
+        print("\n--- Live Data Analysis Report ---")
+        for yr, count in year_metrics:
+            print(f" Academic Year '{yr}': Detected {count} active student profiles.")
+        print("---------------------------------\n")
+
+        # 2. GENERATE LECTURERS POOL BASED ON DEMAND
+        print("Generating realistic faculty roster...")
+        lecturers_pool = []
+        emp_counter = 1
+        
+        for yr, student_count in year_metrics:
+            calendar_year = int(yr[:4])
+            
+            # Smart Logic: Adjust hiring volume based on analyzed student load
+            # Mass hiring triggers when a year sees a surge (>700 students)
+            if student_count > 700:
+                print(f"-> Student surge detected in {yr} ({student_count} students). Deploying Mass Hiring Strategy.")
+                depts_to_hire = list(dept_to_subject_id.keys()) * 2 # Double staff hiring across all departments
+            else:
+                depts_to_hire = list(dept_to_subject_id.keys()) # Standard baseline hiring
+                
+            for dept in depts_to_hire:
+                gender = "Male" if random.random() > 0.5 else "Female"
+                fn = fake.first_name_male() if gender == "Male" else fake.first_name_female()
+                ln = fake.last_name()
+                
+                # Align hire dates right before the specific academic year begins (May/June)
+                h_date = f"{calendar_year}-05-{random.randint(10,28):02d}"
+                
+                # Distinguish mass hiring IDs cleanly
+                emp_prefix = f"EMP-{calendar_year}-MASS" if student_count > 700 else f"EMP-{calendar_year}"
+                emp_no = f"{emp_prefix}{str(emp_counter).zfill(3)}"
+                
+                email = f"{fn.lower()}.{ln.lower()}@college.edu.in"
+                phone = f"{random.choice([7,8,9])}{''.join([str(random.randint(0,9)) for _ in range(9)])}"
+                designation = random.choice(['Lecturer', 'Senior Lecturer']) if student_count <= 700 else 'Lecturer'
+                
+                # Insert directly into the database
+                insert_lecturer_query = """
+                    INSERT INTO lecturers (employee_no, lecturer_name, gender, department, designation, phone, email, hire_date)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                """
+                cursor.execute(insert_lecturer_query, (emp_no, f"Prof. {fn} {fn[0]}. {ln}", gender, dept, designation, phone, email, h_date))
+                
+                # Track internally for assignments
+                lecturers_pool.append({
+                    'db_id': cursor.lastrowid,
+                    'dept': dept,
+                    'sub_id': dept_to_subject_id[dept],
+                    'hire_year': calendar_year
+                })
+                emp_counter += 1
+        
+        conn.commit()
+        print(f"Successfully inserted {len(lecturers_pool)} uniquely tailored faculty records.")
+
+        # 3. DYNAMIC SUBJECT ASSIGNMENTS BASED ON DATA REALITIES
+        print("\nMapping faculty workloads to live student sections...")
+        assignment_count = 0
+        
+        for yr, _ in year_metrics:
+            current_calendar_year = int(yr[:4])
+            
+            # Only assign teachers who were hired on or before this academic year started
+            available_teachers = [t for t in lecturers_pool if t['hire_year'] <= current_calendar_year]
+            
+            # Scan which sections actually have students assigned for this specific year
+            cursor.execute("SELECT DISTINCT section_id FROM students WHERE academic_year = %s;", (yr,))
+            active_sections = [row[0] for row in cursor.fetchall()]
+            
+            for sect_id in active_sections:
+                # Find which core subjects belong to this specific section stream type
+                subject_ids = section_subject_map.get(sect_id, [])
+                
+                for s_id in subject_ids:
+                    # Find available faculty qualified for this subject
+                    qualified_staff = [t for t in available_teachers if t['sub_id'] == s_id]
+                    
+                    if qualified_staff:
+                        assigned_teacher = random.choice(qualified_staff)
+                        
+                        insert_assign_query = """
+                            INSERT INTO subject_assignments (lecturer_id, subject_id, section_id, academic_year)
+                            VALUES (%s, %s, %s, %s);
+                        """
+                        cursor.execute(insert_assign_query, (assigned_teacher['db_id'], s_id, sect_id, yr))
+                        assignment_count += 1
+                        
+        conn.commit()
+        print(f"Successfully generated {assignment_count} workload assignments with strict timeline validation.")
+        
+    except mysql.connector.Error as err:
+        print(f"Database Error Encountered: {err}")
+    finally:
+        if 'conn' in locals() and conn.is_connected():
+            cursor.close()
+            conn.close()
+            print("\nDatabase connection closed cleanly. Systems fully synchronized!")
+
+if __name__ == "__main__":
+    analyze_and_build_faculty()
+
+this is the important pipeline where we generate highest number of rows using python in database. this generates data directly into the 
+database as pipeline its generate data using python in local database. this genertaes 3 million data in 2 to 3 min max. 
+
+import mysql.connector
+from datetime import datetime, timedelta
+import random
+
+# Database Configuration Setup
+db_config = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': 'your_password',  # 💡 Change this to your exact MySQL password
+    'database': 'college_management'
+}
+
+# Stream curriculum subject maps matching our previous structural schema
+section_subject_map = {
+    1: [1, 2, 3, 4, 9, 10],   # PCMC
+    2: [1, 2, 3, 5, 9, 10],   # PCMB
+    3: [6, 7, 8, 4, 9, 10],   # CEBA
+    4: [6, 7, 8, 3, 9, 10],   # SEBA
+    5: [11, 8, 12, 13, 9, 10],# HEPS
+    6: [11, 8, 13, 12, 9, 10] # HESP
+}
+
+# Strict Indian Holiday Registry (MM-DD)
+INDIAN_HOLIDAYS = [
+    (1, 26),  # Republic Day
+    (8, 15),  # Independence Day
+    (10, 2),  # Gandhi Jayanti
+    (11, 1)   # Karnataka Rajyotsava
+]
+
+def generate_working_days(academic_year_str):
+    """Generates all valid academic working days excluding weekends, summers, and national holidays."""
+    start_year = int(academic_year_str[:4])
+    end_year = start_year + 1
+    
+    start_date = datetime(start_year, 6, 1).date()
+    end_date = datetime(end_year, 3, 31).date()
+    
+    working_days = []
+    current_date = start_date
+    
+    while current_date <= end_date:
+        # 1. Skip Summer Vacation (April and May)
+        if current_date.month in [4, 5]:
+            current_date += timedelta(days=1)
+            continue
+            
+        # 2. Skip Weekends (Saturday = 5, Sunday = 6)
+        if current_date.weekday() in [5, 6]:
+            current_date += timedelta(days=1)
+            continue
+            
+        # 3. Skip Strict National/State Holidays
+        if (current_date.month, current_date.day) in INDIAN_HOLIDAYS:
+            current_date += timedelta(days=1)
+            continue
+            
+        working_days.append(current_date)
+        current_date += timedelta(days=1)
+        
+    return working_days
+
+def run_attendance_pipeline():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        
+        print("Connected to database. Clearing out old attendance records...")
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+        cursor.execute("TRUNCATE TABLE attendance;")
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
+        conn.commit()
+        
+        print("Fetching active student registration mapping...")
+        cursor.execute("SELECT admission_no, section_id, academic_year FROM students;")
+        students = cursor.fetchall()
+        
+        if not students:
+            print("Error: No student profiles found to process! Build the student directory first.")
+            return
+
+        print(f"Loaded {len(students)} active student records. Pre-calculating calendar metrics...")
+        
+        # Pre-cache operational working days per academic batch to boost performance speed
+        unique_years = set([s[2] for s in students])
+        academic_calendars = {yr: generate_working_days(yr) for yr in unique_years}
+        
+        attendance_batch = []
+        total_inserted = 0
+        BATCH_SIZE = 50000  # Pushes 50,000 records at a time to optimize system RAM
+        
+        print("\n--- Commencing Massive 4-Year Attendance Generation Pipeline ---")
+        
+        for index, (adm_no, section_id, acad_year) in enumerate(students):
+            working_days = academic_calendars.get(acad_year, [])
+            mapped_subjects = section_subject_map.get(section_id, [])
+            
+            for day in working_days:
+                for sub_id in mapped_subjects:
+                    # 92% chance of being Present, 8% chance of being Absent
+                    status = 'Present' if random.random() < 0.92 else 'Absent'
+                    
+                    attendance_batch.append((adm_no, sub_id, day, status))
+                    
+                    # When chunk hits capacity limits, execute a mass save to database
+                    if len(attendance_batch) >= BATCH_SIZE:
+                        insert_query = """
+                            INSERT IGNORE INTO attendance (admission_no, subject_id, attendance_date, status)
+                            VALUES (%s, %s, %s, %s);
+                        """
+                        cursor.executemany(insert_query, attendance_batch)
+                        conn.commit()
+                        total_inserted += len(attendance_batch)
+                        print(f" Saved {total_inserted:,} transaction records successfully...")
+                        attendance_batch = [] # Flush local memory block
+            
+            if (index + 1) % 500 == 0:
+                print(f"Processed tracking profiles for {index + 1}/{len(students)} students...")
+
+        # Clear out remaining residual records left in the array array
+        if attendance_batch:
+            insert_query = """
+                INSERT IGNORE INTO attendance (admission_no, subject_id, attendance_date, status)
+                VALUES (%s, %s, %s, %s);
+            """
+            cursor.executemany(insert_query, attendance_batch)
+            conn.commit()
+            total_inserted += len(attendance_batch)
+
+        print("-----------------------------------------------------------------")
+        print(f" Success! Pipeline Complete. Total Logged Rows: {total_inserted:,}")
+        
+    except mysql.connector.Error as err:
+        print(f"Pipeline Interrupted by Database Error: {err}")
+    finally:
+        if 'conn' in locals() and conn.is_connected():
+            cursor.close()
+            conn.close()
+            print("Database channel disconnected cleanly. Systems synchronized.")
+
+if __name__ == "__main__":
+    run_attendance_pipeline()
+
+
 
