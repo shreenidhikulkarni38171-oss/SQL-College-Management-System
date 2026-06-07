@@ -1,1 +1,18 @@
+INSERT INTO courses (course_name) VALUES 
+('Science'),  -- ID 1
+('Commerce'), -- ID 2
+('Arts');     -- ID 3
+
+INSERT INTO sections (course_id, section_name, capacity) VALUES
+-- Science Stream Combinations
+((SELECT course_id FROM courses WHERE course_name = 'Science'), 'PCMC', 200),
+((SELECT course_id FROM courses WHERE course_name = 'Science'), 'PCMB', 160),
+
+-- Commerce Stream Combinations
+((SELECT course_id FROM courses WHERE course_name = 'Commerce'), 'CEBA', 220),
+((SELECT course_id FROM courses WHERE course_name = 'Commerce'), 'SEBA', 140),
+
+-- Arts Stream Combinations
+((SELECT course_id FROM courses WHERE course_name = 'Arts'), 'HEPS', 80),
+((SELECT course_id FROM courses WHERE course_name = 'Arts'), 'HESP', 80);
 
