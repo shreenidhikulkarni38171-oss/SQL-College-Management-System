@@ -9,3 +9,41 @@ ADD due_date DATE;
 
 ALTER TABLE students
 ADD student_status varchar(10);
+
+
+
+Upadated and chnaged the forigen key vilations use this for that 
+
+-- Step 1: Temporarily turn off foreign key checks so MySQL lets us clear the table
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Step 2: Wipe the table and completely reset the auto-increment counter back to 1
+TRUNCATE TABLE courses;
+
+-- Step 3: Turn foreign key checks back on
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Step 4: Re-run your stream inserts (They will now get IDs 1, 2, and 3)
+INSERT INTO courses (course_name) VALUES 
+('Science'),  -- Will be ID 1
+('Commerce'), -- Will be ID 2
+('Arts');     -- Will be ID 3
+
+-- Step 1: Temporarily turn off foreign key checks 
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Step 2: Wipe the sections table and reset its auto-increment counter to 1
+TRUNCATE TABLE sections;
+
+-- Step 3: Turn foreign key checks back on
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- Step 4: Re-insert the sections using your clean Course IDs (1 = Science, 2 = Commerce, 3 = Arts)
+INSERT INTO sections (course_id, section_name, capacity) VALUES
+(1, 'PCMC', 200), -- Science
+(1, 'PCMB', 160), -- Science
+(2, 'CEBA', 220), -- Commerce
+(2, 'SEBA', 140), -- Commerce
+(3, 'HEPS', 80),  -- Arts
+(3, 'HESP', 80);  -- Arts
+
